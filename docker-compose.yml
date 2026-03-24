@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: cms-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - cms-web-frontend
+      - cms-web-admin
+      - cms-api
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 前台展示 - Next.js 15
+  cms-web-frontend:
+    build:
+      context: ./apps/web-frontend
+      dockerfile: Dockerfile
+    container_name: cms-web-frontend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://cms-api:3003
+      - NEXT_PUBLIC_APP_NAME=CMS内容管理系统
+      - NEXT_PUBLIC_APP_URL=http://192.168.31.185
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 后台管理 - Next.js 15
+  cms-web-admin:
+    build:
+      context: ./apps/web-admin
+      dockerfile: Dockerfile
+    container_name: cms-web-admin
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://cms-api:3003
+      - NEXT_PUBLIC_APP_NAME=CMS内容管理系统
+      - NEXT_PUBLIC_APP_URL=http://192.168.31.185
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API服务 - Express 5
+  cms-api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: cms-api
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      # 数据库连接（使用现有服务）
+      - DATABASE_URL=postgresql://${RIC_PG_USER}:${RIC_PG_PASSWORD}@${RIC_PG_IP}:${RIC_PG_PORT}/cms
+      # Redis连接（使用现有服务）
+      - REDIS_URL=redis://:${RIC_REDIS_PASSWORD}@${RIC_REDIS_IP}:${RIC_REDIS_PORT}
+      # Elasticsearch连接（使用现有服务）
+      - ES_HOST=${RIC_ES_IP}:${RIC_ES_PORT}
+      - ES_USER=${RIC_ES_USER}
+      - ES_PASSWORD=${RIC_ES_PASSWORD}
+      # JWT配置
+      - JWT_SECRET=${JWT_SECRET:-cms-jwt-secret-2026-change-in-production}
+      - JWT_EXPIRES_IN=7d
+      # 加密
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-character-encryption-key-here}
+      # App配置
+      - FRONTEND_URL=http://192.168.31.185
+      # 文件上传
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=10485760
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - cms-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  cms-network:
+    driver: bridge
+    name: cms-network
+
+volumes:
+  uploads:
+    name: cms-uploads

@@ -1,0 +1,559 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model article_fields {
+  id          Int      @id @default(autoincrement())
+  article_id  Int
+  field_name  String   @db.VarChar(100)
+  field_type  String   @db.VarChar(50)
+  field_value String?
+  field_data  Json     @default("{}")
+  created_at  DateTime @default(now())
+  updated_at  DateTime
+  tenant_id   String   @db.VarChar(30)
+  articles    articles @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  tenants     tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, article_id, field_name])
+  @@index([article_id])
+  @@index([field_name])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id, field_name])
+  @@index([tenant_id])
+}
+
+model article_media {
+  article_id  Int
+  media_id    Int
+  sort_order  Int         @default(0)
+  position    String      @default("body") @db.VarChar(50)
+  tenant_id   String      @db.VarChar(30)
+  articles    articles    @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  media_files media_files @relation(fields: [media_id], references: [id], onDelete: Cascade)
+  tenants     tenants     @relation(fields: [tenant_id], references: [id])
+
+  @@id([article_id, media_id])
+  @@index([article_id])
+  @@index([media_id])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id])
+  @@index([tenant_id, media_id])
+}
+
+model article_tags {
+  article_id Int
+  tag_id     Int
+  tenant_id  String   @db.VarChar(30)
+  articles   articles @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  tags       tags     @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tenants    tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@id([article_id, tag_id])
+  @@index([article_id])
+  @@index([tag_id])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id])
+  @@index([tenant_id, tag_id])
+}
+
+model article_versions {
+  id          Int      @id @default(autoincrement())
+  article_id  Int
+  version     Int
+  title       String   @db.VarChar(255)
+  content     Json
+  metadata    Json     @default("{}")
+  description String?
+  is_current  Boolean  @default(false)
+  created_at  DateTime @default(now())
+  author_id   Int?
+  tenant_id   String   @db.VarChar(30)
+  articles    articles @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  users       users?   @relation(fields: [author_id], references: [id])
+  tenants     tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, article_id, version])
+  @@index([article_id])
+  @@index([created_at])
+  @@index([is_current])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id, created_at])
+  @@index([tenant_id])
+  @@index([tenant_id, is_current])
+}
+
+model articles {
+  id                 Int                 @id @default(autoincrement())
+  title              String              @db.VarChar(255)
+  slug               String              @unique @db.VarChar(255)
+  status             article_status      @default(DRAFT)
+  content            Json                @default("{}")
+  metadata           Json                @default("{}")
+  excerpt            String?
+  thumbnail          String?             @db.VarChar(500)
+  created_at         DateTime            @default(now())
+  updated_at         DateTime
+  published_at       DateTime?
+  deleted_at         DateTime?
+  author_id          Int?
+  category_id        Int?
+  tenant_id          String              @db.VarChar(30)
+  article_fields     article_fields[]
+  article_media      article_media[]
+  article_tags       article_tags[]
+  article_versions   article_versions[]
+  users              users?              @relation(fields: [author_id], references: [id])
+  categories         categories?         @relation(fields: [category_id], references: [id])
+  tenants            tenants             @relation(fields: [tenant_id], references: [id])
+  comments           comments[]
+  workflow_instances workflow_instances?
+
+  @@unique([tenant_id, slug])
+  @@index([author_id])
+  @@index([category_id])
+  @@index([deleted_at])
+  @@index([published_at])
+  @@index([slug])
+  @@index([status])
+  @@index([tenant_id, author_id])
+  @@index([tenant_id, category_id])
+  @@index([tenant_id, deleted_at])
+  @@index([tenant_id])
+  @@index([tenant_id, status])
+  @@index([tenant_id, status, published_at])
+}
+
+model audit_logs {
+  id          Int      @id @default(autoincrement())
+  tenant_id   String   @db.VarChar(30)
+  user_id     Int?
+  action      String   @db.VarChar(50)
+  resource    String   @db.VarChar(100)
+  resource_id Int?
+  changes     Json     @default("{}")
+  ip_address  String?  @db.VarChar(45)
+  user_agent  String?  @db.VarChar(500)
+  created_at  DateTime @default(now())
+  tenants     tenants  @relation(fields: [tenant_id], references: [id])
+  users       users?   @relation(fields: [user_id], references: [id])
+
+  @@index([created_at])
+  @@index([tenant_id, action])
+  @@index([tenant_id])
+  @@index([tenant_id, user_id])
+}
+
+model categories {
+  id               Int          @id @default(autoincrement())
+  name             String       @unique @db.VarChar(100)
+  slug             String       @unique @db.VarChar(100)
+  description      String?
+  parent_id        Int?
+  sort_order       Int          @default(0)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime
+  tenant_id        String       @db.VarChar(30)
+  articles         articles[]
+  categories       categories?  @relation("categoriesTocategories", fields: [parent_id], references: [id])
+  other_categories categories[] @relation("categoriesTocategories")
+  tenants          tenants      @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, name])
+  @@unique([tenant_id, slug])
+  @@index([name])
+  @@index([parent_id])
+  @@index([slug])
+  @@index([tenant_id])
+  @@index([tenant_id, parent_id])
+}
+
+model comments {
+  id             Int            @id @default(autoincrement())
+  content        String
+  status         comment_status @default(PENDING)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime
+  deleted_at     DateTime?
+  article_id     Int
+  author_id      Int?
+  parent_id      Int?
+  tenant_id      String         @db.VarChar(30)
+  articles       articles       @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  users          users?         @relation(fields: [author_id], references: [id])
+  comments       comments?      @relation("commentsTocomments", fields: [parent_id], references: [id], onDelete: Cascade)
+  other_comments comments[]     @relation("commentsTocomments")
+  tenants        tenants        @relation(fields: [tenant_id], references: [id])
+
+  @@index([article_id])
+  @@index([author_id])
+  @@index([deleted_at])
+  @@index([status])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id, deleted_at])
+  @@index([tenant_id])
+  @@index([tenant_id, status])
+}
+
+model media_files {
+  id             Int             @id @default(autoincrement())
+  filename       String          @db.VarChar(255)
+  original_name  String          @db.VarChar(255)
+  mime_type      String          @db.VarChar(100)
+  size           Int
+  storage_path   String          @db.VarChar(500)
+  thumbnail_path String?         @db.VarChar(500)
+  metadata       Json            @default("{}")
+  created_at     DateTime        @default(now())
+  deleted_at     DateTime?
+  uploader_id    Int?
+  tenant_id      String          @db.VarChar(30)
+  article_media  article_media[]
+  tenants        tenants         @relation(fields: [tenant_id], references: [id])
+  users          users?          @relation(fields: [uploader_id], references: [id])
+
+  @@index([created_at])
+  @@index([deleted_at])
+  @@index([mime_type])
+  @@index([tenant_id, created_at])
+  @@index([tenant_id, deleted_at])
+  @@index([tenant_id])
+  @@index([tenant_id, mime_type])
+  @@index([uploader_id])
+}
+
+model menus {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(100)
+  display_name String   @db.VarChar(100)
+  location     String   @db.VarChar(50)
+  items        Json     @default("[]")
+  is_active    Boolean  @default(true)
+  sort_order   Int      @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime
+  tenant_id    String   @db.VarChar(30)
+  tenants      tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, name])
+  @@index([is_active])
+  @@index([location])
+  @@index([tenant_id])
+  @@index([tenant_id, is_active])
+  @@index([tenant_id, location])
+}
+
+model page_layouts {
+  id            Int      @id @default(autoincrement())
+  page_type     String   @unique @db.VarChar(50)
+  page_name     String   @db.VarChar(100)
+  layout_config Json     @default("{}")
+  components    Json     @default("[]")
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+  tenant_id     String   @db.VarChar(30)
+  tenants       tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, page_type])
+  @@index([page_type])
+  @@index([tenant_id])
+  @@index([tenant_id, is_active])
+}
+
+model permissions {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique @db.VarChar(100)
+  description      String?
+  created_at       DateTime           @default(now())
+  updated_at       DateTime
+  role_permissions role_permissions[]
+
+  @@index([name])
+}
+
+model role_permissions {
+  role_id       Int
+  permission_id Int
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@id([role_id, permission_id])
+  @@index([permission_id])
+  @@index([role_id])
+}
+
+model roles {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique @db.VarChar(50)
+  description      String?
+  created_at       DateTime           @default(now())
+  updated_at       DateTime
+  role_permissions role_permissions[]
+  user_roles       user_roles[]
+
+  @@index([name])
+}
+
+model system_configs {
+  id               Int      @id @default(autoincrement())
+  config_group     String   @db.VarChar(50)
+  config_key       String   @db.VarChar(100)
+  config_value     Json
+  display_name     String   @db.VarChar(100)
+  description      String?
+  input_type       String   @db.VarChar(50)
+  input_options    Json?
+  validation_rules Json?
+  sort_order       Int      @default(0)
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+
+  @@unique([config_group, config_key])
+  @@index([config_group])
+  @@index([config_key])
+}
+
+model tags {
+  id           Int            @id @default(autoincrement())
+  name         String         @unique @db.VarChar(100)
+  slug         String         @unique @db.VarChar(100)
+  created_at   DateTime       @default(now())
+  updated_at   DateTime
+  tenant_id    String         @db.VarChar(30)
+  article_tags article_tags[]
+  tenants      tenants        @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, name])
+  @@unique([tenant_id, slug])
+  @@index([name])
+  @@index([slug])
+  @@index([tenant_id])
+}
+
+model tenant_configs {
+  id               Int      @id @default(autoincrement())
+  tenant_id        String   @db.VarChar(30)
+  config_group     String   @db.VarChar(50)
+  config_key       String   @db.VarChar(100)
+  config_value     Json
+  display_name     String   @db.VarChar(100)
+  description      String?
+  input_type       String   @db.VarChar(50)
+  input_options    Json?
+  validation_rules Json?
+  sort_order       Int      @default(0)
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+  tenants          tenants  @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, config_group, config_key])
+  @@index([tenant_id, config_group])
+  @@index([tenant_id, config_key])
+  @@index([tenant_id])
+}
+
+model tenants {
+  id                 String               @id @db.VarChar(30)
+  slug               String               @unique @db.VarChar(50)
+  name               String               @db.VarChar(100)
+  logo               String?              @db.VarChar(500)
+  config             Json                 @default("{}")
+  status             tenant_status        @default(ACTIVE)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime
+  article_fields     article_fields[]
+  article_media      article_media[]
+  article_tags       article_tags[]
+  article_versions   article_versions[]
+  articles           articles[]
+  audit_logs         audit_logs[]
+  categories         categories[]
+  comments           comments[]
+  media_files        media_files[]
+  menus              menus[]
+  page_layouts       page_layouts[]
+  tags               tags[]
+  tenant_configs     tenant_configs[]
+  themes             themes[]
+  users              users[]
+  widgets            widgets[]
+  workflow_instances workflow_instances[]
+  workflow_logs      workflow_logs[]
+
+  @@index([slug])
+  @@index([status])
+}
+
+model themes {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique @db.VarChar(100)
+  display_name  String   @db.VarChar(100)
+  description   String?
+  preview_image String?  @db.VarChar(255)
+  config        Json     @default("{\"colors\": {}, \"shadows\": {}, \"spacing\": {}, \"animations\": {}, \"typography\": {}, \"borderRadius\": {}}")
+  is_active     Boolean  @default(false)
+  is_builtin    Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime
+  tenant_id     String   @db.VarChar(30)
+  tenants       tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, name])
+  @@index([is_active])
+  @@index([name])
+  @@index([tenant_id])
+  @@index([tenant_id, is_active])
+}
+
+model user_roles {
+  user_id Int
+  role_id Int
+  roles   roles @relation(fields: [role_id], references: [id], onDelete: Cascade)
+  users   users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, role_id])
+  @@index([role_id])
+  @@index([user_id])
+}
+
+model users {
+  id                                                       Int                  @id @default(autoincrement())
+  username                                                 String               @unique @db.VarChar(50)
+  email                                                    String               @unique @db.VarChar(100)
+  passwordHash                                             String               @db.VarChar(255)
+  avatarUrl                                                String?              @db.VarChar(255)
+  isActive                                                 Boolean              @default(true)
+  metadata                                                 Json                 @default("{}")
+  created_at                                               DateTime             @default(now())
+  updated_at                                               DateTime
+  deleted_at                                               DateTime?
+  tenant_id                                                String               @db.VarChar(30)
+  is_super_admin                                           Boolean              @default(false)
+  article_versions                                         article_versions[]
+  articles                                                 articles[]
+  audit_logs                                               audit_logs[]
+  comments                                                 comments[]
+  media_files                                              media_files[]
+  user_roles                                               user_roles[]
+  tenants                                                  tenants              @relation(fields: [tenant_id], references: [id])
+  workflow_instances_workflow_instances_approver_idTousers workflow_instances[] @relation("workflow_instances_approver_idTousers")
+  workflow_instances_workflow_instances_creator_idTousers  workflow_instances[] @relation("workflow_instances_creator_idTousers")
+  workflow_logs                                            workflow_logs[]
+
+  @@unique([tenant_id, email])
+  @@unique([tenant_id, username])
+  @@index([email])
+  @@index([isActive])
+  @@index([tenant_id, deleted_at])
+  @@index([tenant_id])
+  @@index([tenant_id, isActive])
+  @@index([username])
+}
+
+model widgets {
+  id               Int      @id @default(autoincrement())
+  name             String   @unique @db.VarChar(100)
+  display_name     String   @db.VarChar(100)
+  widget_type      String   @db.VarChar(50)
+  config           Json     @default("{}")
+  show_title       Boolean  @default(true)
+  custom_class     String?  @db.VarChar(255)
+  location         String   @default("sidebar") @db.VarChar(50)
+  sort_order       Int      @default(0)
+  visibility_rules Json     @default("{}")
+  is_active        Boolean  @default(true)
+  created_at       DateTime @default(now())
+  updated_at       DateTime
+  tenant_id        String   @db.VarChar(30)
+  tenants          tenants  @relation(fields: [tenant_id], references: [id])
+
+  @@unique([tenant_id, name])
+  @@index([is_active])
+  @@index([location])
+  @@index([name])
+  @@index([tenant_id])
+  @@index([tenant_id, is_active])
+  @@index([tenant_id, location])
+}
+
+model workflow_instances {
+  id                                          Int             @id @default(autoincrement())
+  article_id                                  Int             @unique
+  current_state                               String          @default("draft") @db.VarChar(50)
+  next_state                                  String?         @db.VarChar(50)
+  workflow_type                               String          @default("content") @db.VarChar(50)
+  created_at                                  DateTime        @default(now())
+  updated_at                                  DateTime
+  due_at                                      DateTime?
+  creator_id                                  Int?
+  approver_id                                 Int?
+  tenant_id                                   String          @db.VarChar(30)
+  users_workflow_instances_approver_idTousers users?          @relation("workflow_instances_approver_idTousers", fields: [approver_id], references: [id])
+  articles                                    articles        @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  users_workflow_instances_creator_idTousers  users?          @relation("workflow_instances_creator_idTousers", fields: [creator_id], references: [id])
+  tenants                                     tenants         @relation(fields: [tenant_id], references: [id])
+  workflow_logs                               workflow_logs[]
+
+  @@index([approver_id])
+  @@index([article_id])
+  @@index([creator_id])
+  @@index([current_state])
+  @@index([tenant_id, approver_id])
+  @@index([tenant_id, article_id])
+  @@index([tenant_id, creator_id])
+  @@index([tenant_id, current_state])
+  @@index([tenant_id])
+}
+
+model workflow_logs {
+  id                   Int                @id @default(autoincrement())
+  workflow_instance_id Int
+  previous_state       String?            @db.VarChar(50)
+  new_state            String             @db.VarChar(50)
+  reason               String?
+  created_at           DateTime           @default(now())
+  actor_id             Int?
+  tenant_id            String             @db.VarChar(30)
+  users                users?             @relation(fields: [actor_id], references: [id])
+  tenants              tenants            @relation(fields: [tenant_id], references: [id])
+  workflow_instances   workflow_instances @relation(fields: [workflow_instance_id], references: [id], onDelete: Cascade)
+
+  @@index([actor_id])
+  @@index([created_at])
+  @@index([tenant_id, actor_id])
+  @@index([tenant_id, created_at])
+  @@index([tenant_id])
+  @@index([tenant_id, workflow_instance_id])
+  @@index([workflow_instance_id])
+}
+
+enum article_status {
+  DRAFT
+  PENDING
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum comment_status {
+  PENDING
+  APPROVED
+  SPAM
+  DELETED
+}
+
+enum tenant_status {
+  ACTIVE
+  SUSPENDED
+  TRIAL
+  DISABLED
+}

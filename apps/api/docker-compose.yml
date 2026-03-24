@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cms-api
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - DATABASE_URL=postgresql://${RIC_PG_USER}:${RIC_PG_PASSWORD}@${RIC_PG_IP}:${RIC_PG_PORT}/cms?schema=public
+      - REDIS_URL=redis://:${RIC_REDIS_PASSWORD}@${RIC_REDIS_IP}:${RIC_REDIS_PORT}
+      - ES_HOST=${RIC_ES_IP}
+      - ES_PORT=${RIC_ES_PORT}
+      - ES_USER=${RIC_ES_USER}
+      - ES_PASSWORD=${RIC_ES_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=7d
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3001}
+      - FRONTEND_URLS=${FRONTEND_URLS:-http://localhost:3001,http://localhost:3002}
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=10485760
+    volumes:
+      - ./uploads:/app/uploads
+    networks:
+      - cms-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  cms-network:
+    driver: bridge

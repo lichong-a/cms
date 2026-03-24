@@ -1,0 +1,65 @@
+{
+  "name": "cms-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CMS内容管理系统 - Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @cms/api dev\" \"pnpm --filter @cms/web-frontend dev\" \"pnpm --filter @cms/web-admin dev\"",
+    "dev:api": "pnpm --filter @cms/api dev",
+    "dev:frontend": "pnpm --filter @cms/web-frontend dev",
+    "dev:admin": "pnpm --filter @cms/web-admin dev",
+    "build": "pnpm -r build",
+    "build:api": "pnpm --filter @cms/api build",
+    "build:frontend": "pnpm --filter @cms/web-frontend build",
+    "build:admin": "pnpm --filter @cms/web-admin build",
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --cache --fix",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "test": "pnpm -r test",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules .next dist coverage",
+    "db:generate": "pnpm --filter @cms/api db:generate",
+    "db:migrate": "pnpm --filter @cms/api db:migrate",
+    "db:seed": "pnpm --filter @cms/api db:seed",
+    "db:studio": "pnpm --filter @cms/api db:studio",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^22.0.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.57.0",
+    "@eslint/js": "^9.0.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "eslint-config-prettier": "^10.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.29.2"
+}
