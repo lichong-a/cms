@@ -26,7 +26,7 @@ function isPrivateIpv4(hostname: string) {
     return false;
   }
 
-  const [first, second] = segments;
+  const [first = -1, second = -1] = segments;
 
   if (first === 10) {
     return true;

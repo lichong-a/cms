@@ -23,7 +23,7 @@ const isPrivateIpv4 = (host: string): boolean => {
     return false
   }
 
-  const [first, second] = parts
+  const [first = -1, second = -1] = parts
 
   if (first === 10) {
     return true

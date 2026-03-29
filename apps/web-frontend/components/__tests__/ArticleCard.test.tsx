@@ -1,4 +1,4 @@
-import type { Article, Category } from '@cms/types';
+import { ContentStatus, type Article, type Category } from '@cms/types';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 
@@ -16,7 +16,11 @@ describe('ArticleCard', () => {
     id: 1,
     title: 'Test Article Title',
     slug: 'test-article-slug',
-    content: 'Test content',
+    content: {
+      type: 'doc',
+      content: [],
+    },
+    metadata: {},
     excerpt: 'This is a test excerpt for the article',
     coverImage: 'https://example.com/image.jpg',
     category: {
@@ -24,9 +28,9 @@ describe('ArticleCard', () => {
       name: 'Technology',
       slug: 'tech',
       description: 'Tech articles',
-      created_at: new Date(),
-      updated_at: new Date(),
-      tenant_id: 'default',
+      sortOrder: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     author: {
       username: 'testuser',
@@ -35,12 +39,12 @@ describe('ArticleCard', () => {
     publishedAt: new Date('2024-01-15'),
     viewCount: 100,
     likeCount: 50,
-    created_at: new Date(),
-    updated_at: new Date(),
-    deleted_at: null,
-    tenant_id: 'default',
-    author_id: 1,
-    status: 'PUBLISHED',
+    commentCount: 0,
+    tags: [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    authorId: 1,
+    status: ContentStatus.PUBLISHED,
   };
 
   it('should render article title', () => {
