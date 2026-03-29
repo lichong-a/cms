@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck_build:
+    name: Typecheck And Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: true
+      HUSKY: 0
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run build
+        run: pnpm build
+
+  test:
+    name: Unit Integration And E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CI: true
+      HUSKY: 0
+      JWT_SECRET: ci-jwt-secret
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      DEFAULT_ADMIN_EMAIL: admin@example.com
+      DEFAULT_ADMIN_USERNAME: admin
+      DEFAULT_ADMIN_PASSWORD: admin123
+      FRONTEND_URLS: http://localhost:3001,http://localhost:3002
+      ALLOW_LAN_ORIGINS: "false"
+      API_INTERNAL_URL: http://localhost:3003/api/v1
+      PLAYWRIGHT_FRONTEND_BASE_URL: http://localhost:3001
+      PLAYWRIGHT_ADMIN_BASE_URL: http://localhost:3002
+      PLAYWRIGHT_API_BASE_URL: http://localhost:3003
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.29.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Ensure PostgreSQL client is available
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+      - name: Create application and test databases
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'cms'" | grep -q 1 || \
+            psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE cms"
+          psql -h 127.0.0.1 -U postgres -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'cms_test'" | grep -q 1 || \
+            psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE cms_test"
+
+      - name: Generate Prisma client
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms
+        run: pnpm --filter @cms/api db:generate
+
+      - name: Run Prisma migrations for application database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms
+        run: pnpm --filter @cms/api exec prisma migrate deploy
+
+      - name: Run Prisma migrations for test database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
+        run: pnpm --filter @cms/api exec prisma migrate deploy
+
+      - name: Run workspace tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: pnpm test
+
+      - name: Run end-to-end tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms
+          REDIS_URL: redis://127.0.0.1:6379
+        run: pnpm test:e2e
