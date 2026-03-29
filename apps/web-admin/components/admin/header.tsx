@@ -1,22 +1,15 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-
 import TenantSwitcher from '@/components/TenantSwitcher'
+import { api } from '@/lib/api-v1'
 
 interface HeaderProps {
   onMenuClick?: () => void
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const router = useRouter()
-
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('currentTenant')
-    router.push('/login')
+    void api.logoutUser()
   }
 
   return (

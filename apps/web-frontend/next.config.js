@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
+const allowedDevOrigins = (process.env.ALLOWED_DEV_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+
 const nextConfig = {
   transpilePackages: ['@cms/types', '@cms/utils'],
   eslint: {
@@ -7,7 +12,7 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
-  allowedDevOrigins: ['192.168.31.185'],
+  ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
 }
 
 module.exports = nextConfig

@@ -9,22 +9,15 @@ import { tenantMiddleware } from './middleware/tenant';
 import routes from './routes';
 import { connectRedis, disconnectRedis } from './services/cache.service';
 import { connectDatabase, disconnectDatabase } from './services/database.service';
-import { ensureDefaultTenant } from './services/tenant.service';
+import { buildAllowedOrigins, isAllowedOrigin, shouldAllowLanOrigins } from './utils/cors';
+import { ensureDefaultAdmin, ensureDefaultTenant } from './services/tenant.service';
 import logger from './utils/logger';
 
 const app = express();
 const PORT = process.env['PORT'] || 3003;
 
-// CORS 配置 - 支持多前端
-const allowedOrigins = [
-  'http://localhost:3001',  // web-frontend
-  'http://localhost:3002',  // web-admin
-  'http://localhost:3003',  // api docs
-  'http://192.168.31.185:3001', // 网络访问 - 前台
-  'http://192.168.31.185:3002', // 网络访问 - 后台
-  'http://192.168.31.185:3003', // 网络访问 - API
-  ...((process.env['FRONTEND_URLS']?.split(',')) || []),
-];
+const allowedOrigins = buildAllowedOrigins();
+const allowLanOrigins = shouldAllowLanOrigins();
 
 // 中间件 - 开发环境禁用 CSP 以支持 Swagger UI
 app.use(
@@ -38,7 +31,7 @@ app.use(cors({
     // 允许无 origin 的请求（如移动应用、Postman）
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin, allowedOrigins, { allowLanOrigins })) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -102,6 +95,7 @@ const startServer = async () => {
 
     // 确保默认租户在启动前就存在，避免请求链路里产生副作用
     await ensureDefaultTenant();
+    await ensureDefaultAdmin();
 
     // 生成 Prisma Client
     logger.info('🔄 Generating Prisma Client...');

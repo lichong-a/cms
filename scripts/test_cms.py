@@ -5,8 +5,12 @@ import time
 import random
 import string
 from datetime import datetime
+import os
 
-API_URL = "http://192.168.31.185:3002"
+CMS_HOST = os.getenv("CMS_HOST", "localhost")
+API_PORT = os.getenv("API_PORT", "3003")
+FRONTEND_PORT = os.getenv("FRONTEND_PORT", "3001")
+API_URL = os.getenv("API_URL", f"http://{CMS_HOST}:{API_PORT}")
 HEADERS = {}
 
 def generate_random_string(length=8):
@@ -225,8 +229,8 @@ def main():
         print(f"  - 后台管理: ✅")
         
         print(f"\n🌐 访问地址:")
-        print(f"  - 前端: http://192.168.31.185:3001")
-        print(f"  - 后端API: http://192.168.31.185:3002")
+        print(f"  - 前端: http://{CMS_HOST}:{FRONTEND_PORT}")
+        print(f"  - 后端API: {API_URL}")
         print(f"  - 管理员账号: admin@example.com / admin123")
         print(f"  - 测试账号: {user['email']} / test123")
         

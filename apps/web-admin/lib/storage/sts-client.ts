@@ -1,6 +1,8 @@
+import { getApiV1BaseUrl } from '../api-base-url'
+import { getAccessToken } from '../session'
 import type { STSCredentials } from './types'
 
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3003'
+const API_BASE_URL = getApiV1BaseUrl()
 
 /**
  * STS 客户端
@@ -56,9 +58,9 @@ export class STSClient {
    * 从后端获取凭证
    */
   private async fetchCredentials(type: 'read' | 'write'): Promise<STSCredentials> {
-    const token = localStorage.getItem('token')
+    const token = getAccessToken()
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/sts?type=${type}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/sts?type=${type}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

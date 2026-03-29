@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import Header from '@/components/admin/header'
 import Sidebar from '@/components/admin/sidebar'
 import { PageTransition } from '@/components/animations'
+import { clearSession, hasSession, syncSessionCookie } from '@/lib/session'
 
 export default function AdminLayout({
   children,
@@ -18,18 +19,14 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    // 检查认证状态
-    const isAuthenticated = localStorage.getItem('isAuthenticated')
-    const accessToken = localStorage.getItem('accessToken')
-
-    if (!isAuthenticated || !accessToken) {
-      localStorage.removeItem('isAuthenticated')
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      router.push('/login')
-    } else {
-      setIsLoading(false)
+    if (!hasSession()) {
+      clearSession({ includeTenant: true })
+      router.replace('/login')
+      return
     }
+
+    syncSessionCookie()
+    setIsLoading(false)
   }, [router])
 
   if (isLoading) {

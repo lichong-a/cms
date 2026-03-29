@@ -24,6 +24,14 @@ describe('Tenant Middleware', () => {
     expect(response.status).toBe(200);
   });
 
+  it('should treat localhost host requests as the default tenant', async () => {
+    const response = await request(app)
+      .get('/api/v1/articles')
+      .set('Host', 'localhost:3003');
+
+    expect(response.status).toBe(200);
+  });
+
   it('should return 404 for an unknown tenant', async () => {
     const response = await request(app)
       .get('/api/v1/articles')

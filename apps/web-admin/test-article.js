@@ -7,7 +7,7 @@ console.log('Token exists:', !!token)
 console.log('Token preview:', token?.substring(0, 50))
 
 // 2. 检查 API 基础 URL
-const apiUrl = 'http://192.168.31.185:3003/api/v1'
+const apiUrl = `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
 console.log('API URL:', apiUrl)
 
 // 3. 测试创建文章

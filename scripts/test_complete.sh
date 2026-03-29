@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # CMS系统完整测试脚本
-API_URL="http://192.168.31.185:3002"
-FRONTEND_URL="http://192.168.31.185:3001"
+CMS_HOST="${CMS_HOST:-localhost}"
+API_PORT="${API_PORT:-3003}"
+FRONTEND_PORT="${FRONTEND_PORT:-3001}"
+API_URL="${API_URL:-http://${CMS_HOST}:${API_PORT}}"
+FRONTEND_URL="${FRONTEND_URL:-http://${CMS_HOST}:${FRONTEND_PORT}}"
 
 echo "🚀 开始CMS系统完整测试..."
 echo "================================"

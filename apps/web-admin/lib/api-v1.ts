@@ -2,17 +2,16 @@
  * API Client for v1 API
  */
 
-const getApiBaseUrl = () => {
-  if (process.env['NEXT_PUBLIC_API_URL']) {
-    return process.env['NEXT_PUBLIC_API_URL']
-  }
-  if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
-  }
-  return 'http://localhost:3003/api/v1'
-}
+import { getApiV1BaseUrl } from './api-base-url'
+import {
+  clearSession,
+  getAccessToken,
+  getCurrentTenant,
+  getRefreshToken,
+  persistSession,
+} from './session'
 
-const API_BASE_URL = getApiBaseUrl()
+const API_BASE_URL = getApiV1BaseUrl()
 
 export interface ApiError {
   message: string
@@ -40,18 +39,15 @@ class ApiClient {
   }
 
   private getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('accessToken')
+    return getAccessToken()
   }
 
   private getTenantSlug(): string {
-    if (typeof window === 'undefined') return 'default'
-    return localStorage.getItem('currentTenant') || 'default'
+    return getCurrentTenant() || 'default'
   }
 
   private getRefreshToken(): string | null {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('refreshToken')
+    return getRefreshToken()
   }
 
   private async refreshAccessToken(): Promise<void> {
@@ -79,10 +75,10 @@ class ApiClient {
       const data = await response.json()
       
       if (data.success && data.data) {
-        localStorage.setItem('accessToken', data.data.accessToken)
-        if (data.data.refreshToken) {
-          localStorage.setItem('refreshToken', data.data.refreshToken)
-        }
+        persistSession({
+          accessToken: data.data.accessToken,
+          refreshToken: data.data.refreshToken ?? refreshToken,
+        })
       } else {
         this.logout()
         throw new Error('Token refresh failed')
@@ -95,9 +91,7 @@ class ApiClient {
 
   private logout() {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
-      localStorage.removeItem('isAuthenticated')
+      clearSession({ includeTenant: true })
       window.location.href = '/login'
     }
   }
@@ -117,9 +111,6 @@ class ApiClient {
     const token = this.getAuthToken()
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
-      console.log(`[API Request] ${options.method || 'GET'} ${endpoint}`, 'Token:', token.substring(0, 20) + '...')
-    } else {
-      console.warn(`[API Request] ${options.method || 'GET'} ${endpoint} - No token`)
     }
 
     // 添加租户 header

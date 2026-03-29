@@ -1,6 +1,8 @@
 import { type Metadata } from 'next'
 import Link from 'next/link'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+
 export const metadata: Metadata = {
   title: '分类 - CMS 内容管理系统',
   description: '浏览所有文章分类',
@@ -24,7 +26,7 @@ interface CategoriesResponse {
   data: Category[]
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.185:3003/api/v1'
+const API_BASE_URL = getApiV1BaseUrl()
 
 async function getCategories() {
   try {

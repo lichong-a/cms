@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Building2, ChevronDown, Check } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+import { getAccessToken, getCurrentTenant, setCurrentTenant as saveCurrentTenant } from '@/lib/session'
+
 interface Tenant {
   id: string
   name: string
@@ -11,13 +14,9 @@ interface Tenant {
   logo?: string
 }
 
-const API = typeof window !== 'undefined'
-  ? `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
-  : 'http://localhost:3003/api/v1'
-
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-  const res = await fetch(`${API}${endpoint}`, {
+  const token = getAccessToken()
+  const res = await fetch(`${getApiV1BaseUrl()}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -35,8 +34,7 @@ export default function TenantSwitcher() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    // 加载当前租户
-    const savedTenant = localStorage.getItem('currentTenant')
+    const savedTenant = getCurrentTenant()
     if (savedTenant) {
       setCurrentTenant(savedTenant)
     }
@@ -55,7 +53,7 @@ export default function TenantSwitcher() {
         if (!currentTenant && result.data.length > 0 && result.data[0]?.slug) {
           const defaultTenant = result.data[0].slug
           setCurrentTenant(defaultTenant)
-          localStorage.setItem('currentTenant', defaultTenant)
+          saveCurrentTenant(defaultTenant)
         }
       }
     } catch (error) {
@@ -71,8 +69,7 @@ export default function TenantSwitcher() {
       return
     }
 
-    // 保存到 localStorage
-    localStorage.setItem('currentTenant', tenantSlug)
+    saveCurrentTenant(tenantSlug)
     setCurrentTenant(tenantSlug)
     setIsOpen(false)
 

@@ -2,7 +2,9 @@
  * API Client for CMS Web Frontend
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+import { getApiV1BaseUrl } from './api-base-url'
+
+const API_BASE_URL = getApiV1BaseUrl()
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | undefined>
@@ -48,6 +50,10 @@ class ApiClient {
 
   // 文章相关 API
   async getArticles(params?: { page?: number; limit?: number; category?: string; tag?: string }) {
+    if (!params) {
+      return this.fetch<{ data: unknown[]; total: number }>('/articles')
+    }
+
     return this.fetch<{ data: unknown[]; total: number }>('/articles', { params })
   }
 

@@ -139,30 +139,32 @@ docker-compose restart nginx
 
 ### 7. 验证部署
 ```bash
+HOST_IP=<your-lan-host>
+
 # 检查 Nginx（推荐）
-curl http://192.168.31.185
+curl http://$HOST_IP
 
 # 检查前端（直接访问，用于调试）
-curl http://192.168.31.185:3001
+curl http://$HOST_IP:3001
 
 # 检查 API（直接访问，用于调试）
-curl http://192.168.31.185:3002/health
+curl http://$HOST_IP:3003/health
 
 # 在浏览器中访问
-# 通过 Nginx（推荐）: http://192.168.31.185
-# 前端直接访问: http://192.168.31.185:3001
-# API 直接访问: http://192.168.31.185:3002
+# 通过 Nginx（推荐）: http://$HOST_IP
+# 前端直接访问: http://$HOST_IP:3001
+# API 直接访问: http://$HOST_IP:3003
 ```
 
 #### 访问方式说明
-- **通过 Nginx（推荐）**: http://192.168.31.185
-  - 前端页面: http://192.168.31.185/
-  - API 接口: http://192.168.31.185/api/
+- **通过 Nginx（推荐）**: `http://<your-lan-host>`
+  - 前端页面: `http://<your-lan-host>/`
+  - API 接口: `http://<your-lan-host>/api/`
   - 优点: 统一入口，支持 HTTPS，更好的安全性
 
 - **直接访问容器（仅用于调试）**:
-  - 前端: http://192.168.31.185:3001
-  - API: http://192.168.31.185:3002
+  - 前端: `http://<your-lan-host>:3001`
+  - API: `http://<your-lan-host>:3003`
   - 注意: 仅用于开发调试，生产环境不推荐
 
 ---
@@ -287,10 +289,10 @@ sudo ufw status
 docker-compose logs cms-api
 
 # 检查端口占用
-netstat -tulpn | grep 3002
+netstat -tulpn | grep 3003
 
 # 测试健康检查
-curl http://192.168.31.185:3002/health
+curl http://<your-lan-host>:3003/health
 ```
 
 ---

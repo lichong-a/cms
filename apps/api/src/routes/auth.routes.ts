@@ -55,7 +55,10 @@ router.post('/register', validate(registerSchema), async (req, res, next) => {
 // 登录
 router.post('/login', validate(loginSchema), async (req, res, next) => {
   try {
-    const result = await authService.login(req.body);
+    const result = await authService.login({
+      ...req.body,
+      tenantId: req.tenantId || 'default',
+    });
     success(res, result);
     return;
   } catch (error) {

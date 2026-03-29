@@ -66,8 +66,17 @@ apps/web-frontend/
 在 `.env.local` 中配置:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000/api
+NEXT_PUBLIC_API_URL=http://localhost:3003/api/v1
+ALLOWED_DEV_ORIGINS=
 ```
+
+`ALLOWED_DEV_ORIGINS` 仅在需要局域网调试 Next 开发服务器时填写，多个值用逗号分隔。
+
+默认情况下建议不要写死 `NEXT_PUBLIC_API_URL`：
+
+- 浏览器端会自动使用当前访问主机推导 API 地址
+- SSR 默认访问 `localhost:3003`
+- 容器或反向代理场景可使用 `API_INTERNAL_URL` 指定服务端内部地址
 
 ## 功能特性
 

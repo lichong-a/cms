@@ -1,9 +1,10 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { api } from '@/lib/api-v1'
+import { hasSession, persistSession, syncSessionCookie } from '@/lib/session'
 
 interface LoginResponse {
   success: boolean
@@ -25,6 +26,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    if (!hasSession()) {
+      return
+    }
+
+    syncSessionCookie()
+    router.replace('/admin')
+  }, [router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -34,9 +44,10 @@ export default function LoginPage() {
       const response = await api.post<LoginResponse>('/auth/login', { email, password })
 
       if (response.success && response.data) {
-        localStorage.setItem('accessToken', response.data.accessToken)
-        localStorage.setItem('refreshToken', response.data.refreshToken)
-        localStorage.setItem('isAuthenticated', 'true')
+        persistSession({
+          accessToken: response.data.accessToken,
+          refreshToken: response.data.refreshToken,
+        })
         router.push('/admin')
       }
     } catch (err) {

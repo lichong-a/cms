@@ -4,6 +4,9 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+import { getAccessToken } from '@/lib/session'
+
 export default function NewUserPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -19,10 +22,9 @@ export default function NewUserPage() {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('accessToken')
-      const API = `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
+      const token = getAccessToken()
 
-      const response = await fetch(`${API}/auth/register`, {
+      const response = await fetch(`${getApiV1BaseUrl()}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

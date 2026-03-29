@@ -3,6 +3,7 @@
  */
 
 import { api } from './api-v1';
+import { clearSession, getAccessToken, hasSession, persistSession } from './session';
 
 export interface User {
   id: string;
@@ -39,11 +40,10 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
   
   // Store token
   if (typeof window !== 'undefined' && response.success) {
-    localStorage.setItem('accessToken', response.data.accessToken);
-    if (response.data.refreshToken) {
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-    }
-    localStorage.setItem('isAuthenticated', 'true');
+    persistSession({
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+    });
   }
   
   return response;
@@ -57,11 +57,10 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   
   // Store token
   if (typeof window !== 'undefined' && response.success) {
-    localStorage.setItem('accessToken', response.data.accessToken);
-    if (response.data.refreshToken) {
-      localStorage.setItem('refreshToken', response.data.refreshToken);
-    }
-    localStorage.setItem('isAuthenticated', 'true');
+    persistSession({
+      accessToken: response.data.accessToken,
+      refreshToken: response.data.refreshToken,
+    });
   }
   
   return response;
@@ -72,9 +71,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
  */
 export function logout(): void {
   if (typeof window !== 'undefined') {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('isAuthenticated');
+    clearSession({ includeTenant: true });
   }
 }
 
@@ -83,7 +80,7 @@ export function logout(): void {
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
-    const response = await api.get<{ success: boolean; data: User }>('/auth/me');
+    const response = await api.get<{ success: boolean; data: User }>('/auth/profile');
     return response.data;
   } catch {
     return null;
@@ -95,7 +92,7 @@ export async function getCurrentUser(): Promise<User | null> {
  */
 export function isAuthenticated(): boolean {
   if (typeof window === 'undefined') return false;
-  return !!localStorage.getItem('accessToken');
+  return hasSession();
 }
 
 /**
@@ -103,5 +100,5 @@ export function isAuthenticated(): boolean {
  */
 export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('accessToken');
+  return getAccessToken();
 }

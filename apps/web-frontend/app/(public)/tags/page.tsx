@@ -1,6 +1,8 @@
 import { type Metadata } from 'next'
 import Link from 'next/link'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+
 export const metadata: Metadata = {
   title: '标签 - CMS 内容管理系统',
   description: '浏览所有文章标签',
@@ -23,7 +25,7 @@ interface TagsResponse {
   data: Tag[]
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.185:3003/api/v1'
+const API_BASE_URL = getApiV1BaseUrl()
 
 async function getTags() {
   try {

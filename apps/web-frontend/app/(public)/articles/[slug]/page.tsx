@@ -2,6 +2,8 @@ import { type Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+
 interface ArticlePageProps {
   params: Promise<{ slug: string }>
 }
@@ -42,7 +44,7 @@ interface ArticleDetailResponse {
   data: Article
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.185:3003/api/v1'
+const API_BASE_URL = getApiV1BaseUrl()
 
 async function getArticle(slug: string) {
   try {

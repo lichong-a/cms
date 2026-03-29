@@ -1,0 +1,5 @@
+export const ACCESS_TOKEN_KEY = 'accessToken'
+export const REFRESH_TOKEN_KEY = 'refreshToken'
+export const AUTH_STATE_KEY = 'isAuthenticated'
+export const CURRENT_TENANT_KEY = 'currentTenant'
+export const AUTH_COOKIE_NAME = 'cms_admin_session'

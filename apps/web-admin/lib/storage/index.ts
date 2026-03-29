@@ -1,3 +1,5 @@
+import { getApiOrigin, getApiV1BaseUrl } from '../api-base-url'
+import { getAccessToken } from '../session'
 import { OSSStorageProvider } from './oss-provider'
 import type { StorageProvider, UploadOptions, UploadResult } from './types'
 
@@ -58,15 +60,16 @@ export class StorageFactory {
  * 文件实际上传到后端，由后端保存到本地文件系统
  */
 class LocalStorageProviderAPI implements StorageProvider {
-  private baseUrl = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3003'
+  private apiBaseUrl = getApiV1BaseUrl()
+  private apiOrigin = getApiOrigin()
 
   async upload(file: File, _options: UploadOptions = {}): Promise<UploadResult> {
     const formData = new FormData()
     formData.append('file', file)
 
-    const token = localStorage.getItem('token')
+    const token = getAccessToken()
 
-    const response = await fetch(`${this.baseUrl}/api/v1/upload`, {
+    const response = await fetch(`${this.apiBaseUrl}/upload`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -88,7 +91,7 @@ class LocalStorageProviderAPI implements StorageProvider {
   }
 
   async getUrl(key: string): Promise<string> {
-    return `${this.baseUrl}/uploads/${key}`
+    return `${this.apiOrigin}/uploads/${key}`
   }
 }
 

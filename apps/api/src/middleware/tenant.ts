@@ -13,15 +13,57 @@ declare global {
   }
 }
 
-const resolveTenantSlug = (req: Request): string => {
+const isLoopbackHost = (host: string): boolean => {
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1' || host === '[::1]'
+}
+
+const isPrivateIpv4 = (host: string): boolean => {
+  const parts = host.split('.').map((part) => Number(part))
+  if (parts.length !== 4 || parts.some((part) => Number.isNaN(part) || part < 0 || part > 255)) {
+    return false
+  }
+
+  const [first, second] = parts
+
+  if (first === 10) {
+    return true
+  }
+
+  if (first === 172 && second >= 16 && second <= 31) {
+    return true
+  }
+
+  return first === 192 && second === 168
+}
+
+export const resolveTenantSlug = (req: Request): string => {
   const headerTenant = req.headers['x-tenant']
 
   if (typeof headerTenant === 'string' && headerTenant.trim()) {
     return headerTenant.trim()
   }
 
-  const host = req.hostname
-  const subdomain = host.split('.')[0]
+  const host = req.hostname.toLowerCase()
+
+  if (isLoopbackHost(host) || isPrivateIpv4(host)) {
+    return 'default'
+  }
+
+  if (host.endsWith('.localhost')) {
+    const subdomain = host.split('.')[0]
+    if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
+      return subdomain
+    }
+
+    return 'default'
+  }
+
+  const segments = host.split('.')
+  if (segments.length < 3) {
+    return 'default'
+  }
+
+  const subdomain = segments[0]
 
   if (
     subdomain &&

@@ -1,12 +1,14 @@
 import { type Article, type User, type ApiResponse } from '@cms/types';
 
-const API_BASE = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3000';
+import { getApiOrigin, getApiV1BaseUrl } from './api-base-url';
+
+const API_BASE = getApiOrigin();
 
 /**
  * API Client for making HTTP requests to the backend
  */
 
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3002/api';
+const API_BASE_URL = getApiV1BaseUrl();
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number>;
@@ -33,7 +35,9 @@ class ApiClient {
     }
 
     // Get auth token from localStorage (client-side only)
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined'
+      ? localStorage.getItem('accessToken') || localStorage.getItem('token')
+      : null;
 
     // Default headers
     const headers: Record<string, string> = {

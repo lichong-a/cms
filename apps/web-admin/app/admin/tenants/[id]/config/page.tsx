@@ -9,6 +9,9 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+import { getAccessToken } from '@/lib/session'
+
 interface TenantConfig {
   seo: {
     siteName: string
@@ -73,13 +76,9 @@ const tabs = [
   { id: 'features', label: '功能开关', icon: Settings },
 ]
 
-const API = typeof window !== 'undefined'
-  ? `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
-  : 'http://localhost:3003/api/v1'
-
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null
-  const res = await fetch(`${API}${endpoint}`, {
+  const token = getAccessToken()
+  const res = await fetch(`${getApiV1BaseUrl()}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',

@@ -5,6 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
 import TenantForm from '@/components/TenantForm'
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+import { getAccessToken } from '@/lib/session'
 
 export default function EditTenantPage() {
   const router = useRouter()
@@ -19,10 +21,9 @@ export default function EditTenantPage() {
   useEffect(() => {
     const loadTenant = async () => {
       try {
-        const token = localStorage.getItem('accessToken')
-        const API = `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
+        const token = getAccessToken()
 
-        const response = await fetch(`${API}/tenants/${tenantId}`, {
+        const response = await fetch(`${getApiV1BaseUrl()}/tenants/${tenantId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -51,10 +52,9 @@ export default function EditTenantPage() {
   const handleSubmit = async (data: any) => {
     try {
       setSaving(true)
-      const token = localStorage.getItem('accessToken')
-      const API = `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
+      const token = getAccessToken()
 
-      const response = await fetch(`${API}/tenants/${tenantId}`, {
+      const response = await fetch(`${getApiV1BaseUrl()}/tenants/${tenantId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

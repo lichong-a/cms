@@ -4,16 +4,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import TenantForm from '@/components/TenantForm'
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+import { getAccessToken } from '@/lib/session'
 
 export default function NewTenantPage() {
   const router = useRouter()
 
   const handleSubmit = async (data: any) => {
     try {
-      const token = localStorage.getItem('accessToken')
-      const API = `${window.location.protocol}//${window.location.hostname}:3003/api/v1`
+      const token = getAccessToken()
       
-      const response = await fetch(`${API}/tenants`, {
+      const response = await fetch(`${getApiV1BaseUrl()}/tenants`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

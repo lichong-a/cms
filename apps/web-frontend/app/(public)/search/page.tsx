@@ -2,6 +2,8 @@ import { Search } from 'lucide-react'
 import { type Metadata } from 'next'
 import Link from 'next/link'
 
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
+
 interface SearchPageProps {
   searchParams: Promise<{ q?: string; page?: string }>
 }
@@ -45,7 +47,7 @@ interface ArticlesResponse {
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.185:3003/api/v1'
+const API_BASE_URL = getApiV1BaseUrl()
 
 async function searchArticles(query: string, page: number = 1) {
   try {

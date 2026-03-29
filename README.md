@@ -34,13 +34,37 @@ cp .env.example .env 2>/dev/null || true
 cp apps/api/.env.example apps/api/.env 2>/dev/null || true
 ```
 
-前端应用如需补充变量，请直接参考各自目录中的现有 `.env.local` 文件。
+前后台如需显式指定 API 地址，可在 `.env.local` 中补充：
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3003/api/v1
+```
+
+默认情况下不建议写死该值：
+
+- 浏览器端会优先使用当前访问主机推导 API 地址
+- SSR 默认走 `localhost:3003`
+- 容器场景可额外配置 `API_INTERNAL_URL=http://cms-api:3003/api/v1`
+
+如需局域网调试 Next 开发服务器，可额外配置：
+
+```env
+ALLOWED_DEV_ORIGINS=http://your-lan-ip:3001,http://your-lan-ip:3002
+```
 
 ### 启动开发环境
 
 ```bash
 pnpm dev
 ```
+
+开发环境下，如果默认租户下还没有任何管理员账号，API 会自动补一个开发管理员：
+
+```text
+admin@example.com / admin123
+```
+
+如需修改，可在 `apps/api/.env` 中设置 `DEFAULT_ADMIN_EMAIL` / `DEFAULT_ADMIN_PASSWORD`。
 
 也可以分别启动：
 

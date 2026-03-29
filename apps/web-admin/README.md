@@ -43,8 +43,9 @@ app/
 │   ├── media/       # 媒体库
 │   ├── users/       # 用户管理
 │   └── settings/    # 系统设置
-├── layout.tsx       # 根布局
-└── middleware.ts    # 认证中间件
+└── layout.tsx       # 根布局
+
+middleware.ts        # 认证中间件
 
 components/
 ├── ui/              # Shadcn/ui 组件
@@ -81,16 +82,26 @@ styles/
 ### 待完成
 - [ ] 集成 Shadcn/ui 组件
 - [ ] 完善表单验证
-- [ ] 实现真实登录逻辑
-- [ ] API 对接
 - [ ] 数据表格分页、排序
 - [ ] 图片上传功能
+- [ ] 后台错误提示与失效跳转进一步统一
 
 ## 认证
 
-当前使用简单的 localStorage 认证，未认证用户访问 `/admin/*` 路由会被重定向到 `/login`。
+当前后台已对接真实 API 登录与 JWT 刷新逻辑。
 
-后续需要对接真实 API 和 JWT 认证。
+- 登录成功后会在浏览器中持久化 `accessToken` / `refreshToken`
+- 同时会同步一个 session cookie 给 Next middleware，用于保护 `/admin/*`
+- 未认证访问 `/admin/*` 会被重定向到 `/login`
+- token 失效后会尝试刷新，失败则清理会话并跳回登录页
+- 开发环境下，如果默认管理员不存在，API 会自动补 `admin@example.com / admin123`
+
+## API 地址配置
+
+- 同机开发时，建议不要写死 `NEXT_PUBLIC_API_URL`
+- 浏览器端会自动使用当前访问主机推导 API 地址
+- 服务端渲染默认访问 `localhost:3003`
+- 容器或反向代理场景请使用 `API_INTERNAL_URL` 指定内部 API 地址
 
 ## 端口
 

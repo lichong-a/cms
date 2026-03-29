@@ -1,4 +1,7 @@
-const API_BASE_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3001'
+import { getApiV1BaseUrl } from './api-base-url'
+import { getAccessToken } from './session'
+
+const API_BASE_URL = getApiV1BaseUrl()
 
 class ApiClient {
   private baseUrl: string
@@ -23,7 +26,7 @@ class ApiClient {
     }
 
     // 添加认证 token
-    const token = localStorage.getItem('token')
+    const token = getAccessToken()
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
     }

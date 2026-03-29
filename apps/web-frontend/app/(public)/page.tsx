@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { StaggeredList, StaggeredItem } from '@/components/animations'
 import { Sidebar } from '@/components/Sidebar'
+import { getApiV1BaseUrl } from '@/lib/api-base-url'
 
 export const metadata: Metadata = {
   title: '首页 - CMS 内容管理系统',
@@ -76,7 +77,7 @@ interface TagsResponse {
   data: Tag[]
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.31.185:3003/api/v1'
+const API_BASE_URL = getApiV1BaseUrl()
 
 async function getArticles(page: number = 1) {
   try {
