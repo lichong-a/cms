@@ -1,12 +1,12 @@
 # CMS 当前开发路线图
 
-**最后更新**: 2026-03-29
+**最后更新**: 2026-03-30
 
 本文件描述当前有效的开发计划，并以当前代码事实和已验证链路为准。历史阶段说明已归档到 [`docs/archive/TODO_HISTORY.md`](./archive/TODO_HISTORY.md)。
 
 ## 当前状态
 
-截至 2026-03-29，仓库已经完成基础基线收敛，并且主工程链路已验证：
+截至 2026-03-30，仓库已经完成基础基线收敛，并且主工程链路已验证：
 
 - 应用边界已稳定：`web-frontend` / `web-admin` / `api`
 - 后台请求链路已统一到 `api-v1`
@@ -16,6 +16,7 @@
 - `pnpm build` 已通过
 - `pnpm typecheck` 已通过
 - `pnpm test:e2e` 已通过
+- GitHub Actions CI 已通过
 
 当前阶段不再是“大范围重构”，而是进入交付前的收口阶段：
 
@@ -28,7 +29,8 @@
 
 以下问题已经暴露，必须优先处理：
 
-- [ ] E2E 已切到真实登录与后台主链路，但租户切换仍未覆盖
+- [ ] 租户切换仍缺少最小 E2E 覆盖，后台多租户主链路还没有自动回归保护
+- [ ] API 高风险路径的测试覆盖仍集中在 auth/articles/categories/tags，dashboard 与 tenant 管理覆盖不足
 - [ ] 子项目 README 与当前代码事实存在漂移，容易误导后续开发
 - [ ] 仓库中仍有一批调试输出和临时脚本，需要分级清理
 
@@ -38,7 +40,7 @@
 
 - [ ] 统一后台认证方案，明确 access token / refresh token / 页面保护 / 登录失效跳转的单一实现
 - [ ] 为鉴权、refresh token、租户切换、dashboard 统计补齐集成测试
-- [ ] 跑通并固定 `pnpm dev` / `pnpm build` / `pnpm typecheck` / `pnpm test` 主链路
+- [x] 跑通并固定 `pnpm dev` / `pnpm build` / `pnpm typecheck` / `pnpm test` / `pnpm test:e2e` 主链路
 - [ ] 统一前台、后台、存储相关模块的 API base URL 读取方式，去掉旧端口和局域网地址硬编码
 - [ ] 统一后台上传、列表、详情、删除操作的错误处理和登录失效跳转
 - [ ] 复查 API 中依赖 `tenantId` 的接口，避免再次出现 token 字段缺失导致的 400/401
@@ -71,7 +73,8 @@
 这部分在主链路稳定后推进，不提前堆功能。
 
 - [ ] 为 API 高风险路由补齐集成测试
-- [ ] 为后台登录、文章管理、租户切换增加最小 E2E 覆盖
+- [x] 为后台登录、文章管理增加最小 E2E 覆盖
+- [ ] 为租户切换增加最小 E2E 覆盖
 - [x] 将当前真实可运行的检查接入 CI
 - [ ] 补齐数据库迁移、seed、环境变量的开发者说明
 - [ ] 建立“新增功能至少附带一条验证路径”的提交约束
@@ -93,18 +96,19 @@
 
 - [x] 统一后台认证实现，消除 `localStorage` 与 cookie 双轨行为
 - [x] 修正前台、后台和存储模块中的 API 地址硬编码
-- [ ] 补齐 auth / refresh token / dashboard / tenant switch 的测试缺口
+- [ ] 补齐 refresh token / dashboard / tenant switch 的测试缺口
 - [x] 修正 README、`.env.example`、子项目说明中的漂移项
 
 本周退出标准：
 
-- `pnpm test`、`pnpm build`、`pnpm typecheck` 可稳定通过
+- `pnpm test`、`pnpm build`、`pnpm typecheck`、`pnpm test:e2e` 与 GitHub Actions CI 可稳定通过
 - 管理后台在开发和生产语义下都能正确完成登录、失效、跳转
 - 仓库中不再残留局域网 API 地址
 
 当前阻塞：
 
 - [ ] 仍需为租户切换补齐最小 E2E 覆盖
+- [ ] dashboard / refresh token 的自动回归覆盖还不够
 
 ### 第 2 周：后台闭环验收
 
@@ -134,7 +138,8 @@
 
 ### 第 4 周：质量固化
 
-- [ ] 增加最小 E2E：后台登录、文章管理、租户切换
+- [x] 增加最小 E2E：后台登录、文章管理
+- [ ] 增加最小 E2E：租户切换
 - [ ] 为高风险 API 路由继续补集成测试
 - [x] 接入 CI 中的真实检查
 - [ ] 补齐迁移、seed、环境变量、运行说明
@@ -147,10 +152,10 @@
 
 ## 近期执行顺序
 
-1. 先收口认证、租户、dashboard、API 地址与文档漂移问题
+1. 先补齐租户切换、dashboard、refresh token 的自动回归覆盖
 2. 再完成后台内容管理闭环和管理侧状态统一
-3. 然后做前台完整验收与 SEO 基础项
-4. 最后再推进 CI、迁移说明、工程化补强
+3. 然后补齐迁移、seed、环境变量与开发者说明
+4. 最后推进前台完整验收与 SEO 基础项
 
 ## 完成标准
 
