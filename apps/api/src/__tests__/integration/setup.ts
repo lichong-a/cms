@@ -11,6 +11,16 @@ import { connectRedis, disconnectRedis } from '../../services/cache.service';
 import { prisma, connectDatabase, disconnectDatabase } from '../../services/database.service';
 import { ensureDefaultTenant } from '../../services/tenant.service';
 
+async function syncPrimaryKeySequence(tableName: 'users' | 'categories' | 'tags') {
+  await prisma.$executeRawUnsafe(`
+    SELECT setval(
+      pg_get_serial_sequence('"${tableName}"', 'id'),
+      COALESCE((SELECT MAX(id) FROM "${tableName}"), 1),
+      true
+    );
+  `);
+}
+
 // Global setup before all tests
 beforeAll(async () => {
   try {
@@ -68,6 +78,10 @@ beforeAll(async () => {
         updated_at: new Date(),
       },
     });
+
+    await syncPrimaryKeySequence('users');
+    await syncPrimaryKeySequence('categories');
+    await syncPrimaryKeySequence('tags');
   } catch (error) {
     console.error('Test setup failed:', error);
     throw error;
