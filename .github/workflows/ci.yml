@@ -21,6 +21,7 @@ jobs:
     env:
       CI: true
       HUSKY: 0
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -38,6 +39,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @cms/api db:generate
 
       - name: Run typecheck
         run: pnpm typecheck
@@ -139,11 +143,29 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
         run: pnpm --filter @cms/api exec prisma migrate deploy
 
-      - name: Run workspace tests
+      - name: Run admin tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
           REDIS_URL: redis://127.0.0.1:6379
-        run: pnpm test
+        run: pnpm --filter @cms/web-admin test
+
+      - name: Run frontend tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: pnpm --filter @cms/web-frontend test
+
+      - name: Run shared utils tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: pnpm --filter @cms/utils test
+
+      - name: Run API tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/cms_test
+          REDIS_URL: redis://127.0.0.1:6379
+        run: pnpm --filter @cms/api test:run
 
       - name: Run end-to-end tests
         env:

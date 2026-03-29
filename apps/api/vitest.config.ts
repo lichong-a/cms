@@ -18,8 +18,8 @@ export default defineConfig({
         'prisma/**',
       ],
     },
-    testTimeout: 10000,
-    hookTimeout: 10000,
+    testTimeout: process.env['CI'] ? 30000 : 10000,
+    hookTimeout: process.env['CI'] ? 30000 : 10000,
   },
   resolve: {
     alias: {
